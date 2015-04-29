@@ -94,7 +94,7 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
             mPaintText = new Paint();
             mPaintText.setColor(Color.WHITE);
-            mPaintText.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
+            mPaintText.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
             mPaintText.setAntiAlias(true);
             mPaintText.setTextSize(48);
 
@@ -137,7 +137,7 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
             canvas.drawRect(0, 0, width, height, mPaintBackground);
 
             // Draw the mascot, scaled to fit.
-            int mascotSize = width / 4;
+            int mascotSize = width / 5;
             if (mMascotScaledBitmap == null || mMascotScaledBitmap.getWidth() != mascotSize) {
                 // mMascotBitmap should be square.
                 mMascotScaledBitmap = Bitmap.createScaledBitmap(
@@ -147,7 +147,11 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
             // Draw text
             mCalendar = Calendar.getInstance();
-            canvas.drawText(mDateFormat.format(mCalendar.getTime()), 30, 110, mPaintText);
+            if (isInAmbientMode() || (System.currentTimeMillis() % 1000) < 500) {
+                canvas.drawText(mDateFormat.format(mCalendar.getTime()), 30, 110, mPaintText);
+            } else {
+                canvas.drawText(mDateFormatBlink.format(mCalendar.getTime()), 30, 110, mPaintText);
+            }
         }
 
         @Override
