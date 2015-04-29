@@ -34,19 +34,22 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
     /* implement service callback methods */
     private class Engine extends CanvasWatchFaceService.Engine {
         static final int MSG_UPDATE_TIME = 0;
-        static final long INTERACTIVE_UPDATE_RATE_MS = 500;
+        static final long INTERACTIVE_UPDATE_RATE_MS = 250;
 
         // Time to be displayed
         Calendar mCalendar;
         SimpleDateFormat mDateFormat;
         SimpleDateFormat mDateFormatBlink;
 
+        // Paint for background
+        Paint mPaintBackground;
+
         // Background bitmap
         Bitmap mMascotBitmap;
         Bitmap mMascotScaledBitmap;
 
-        // Paint for drawing text
-        Paint mPaintBackground;
+        // Watch text
+        Typeface mTypeface;
         Paint mPaintText;
 
         // Handler to update the time once a second in interactive mode
@@ -86,15 +89,19 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
             /* load the background image */
             Resources resources = PixelWatchfaceService.this.getResources();
-            Drawable mascotDrawable = resources.getDrawable(R.drawable.droid, null);
+            Drawable mascotDrawable = resources.getDrawable(R.drawable.droid_x2, null);
             mMascotBitmap = ((BitmapDrawable) mascotDrawable).getBitmap();
 
             mDateFormat = new SimpleDateFormat("kk:mm");
             mDateFormatBlink = new SimpleDateFormat("kk mm");
 
+            mTypeface = Typeface.createFromAsset(
+                    getApplication().getAssets(),
+                    "PixelMplus12-Regular.ttf");
+
             mPaintText = new Paint();
             mPaintText.setColor(Color.WHITE);
-            mPaintText.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL));
+            mPaintText.setTypeface(mTypeface);
             mPaintText.setAntiAlias(true);
             mPaintText.setTextSize(48);
 
@@ -147,7 +154,7 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
             // Draw text
             mCalendar = Calendar.getInstance();
-            if (isInAmbientMode() || (System.currentTimeMillis() % 1000) < 500) {
+            if (isInAmbientMode() || (System.currentTimeMillis() % 1000) < 750) {
                 canvas.drawText(mDateFormat.format(mCalendar.getTime()), 30, 110, mPaintText);
             } else {
                 canvas.drawText(mDateFormatBlink.format(mCalendar.getTime()), 30, 110, mPaintText);
