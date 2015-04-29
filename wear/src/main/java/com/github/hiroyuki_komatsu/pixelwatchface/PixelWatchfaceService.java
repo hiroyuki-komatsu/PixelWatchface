@@ -10,13 +10,20 @@ import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 /**
- * Created by komatsu on 15/04/29.
+ * Pixel Watchface.
  */
 public class PixelWatchfaceService extends CanvasWatchFaceService {
+    private static final String TAG = "PixelWatchfaceService";
 
     @Override
     public Engine onCreateEngine() {
@@ -26,10 +33,49 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
     /* implement service callback methods */
     private class Engine extends CanvasWatchFaceService.Engine {
-        /* graphic objects */
+        static final int MSG_UPDATE_TIME = 0;
+        static final long INTERACTIVE_UPDATE_RATE_MS = 500;
+
+        // Time to be displayed
+        Calendar mCalendar;
+        SimpleDateFormat mDateFormat;
+
+        // Background bitmap
         Bitmap mBackgroundBitmap;
         Bitmap mBackgroundScaledBitmap;
+
+        // Paint for drawing text
         Paint mPaint;
+
+        // Handler to update the time once a second in interactive mode
+        final Handler mUpdateTimeHandler = new Handler() {
+            @Override
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                    case MSG_UPDATE_TIME:
+                        invalidate();
+                        if (shouldTimerBeRunning()) {
+                            long timeMs = System.currentTimeMillis();
+                            long delayMs = INTERACTIVE_UPDATE_RATE_MS
+                                    - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
+                            mUpdateTimeHandler
+                                    .sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
+                        }
+                        break;
+                }
+            }
+        };
+
+        private void updateTimer() {
+            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            if (shouldTimerBeRunning()) {
+                mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
+            }
+        }
+
+        private boolean shouldTimerBeRunning() {
+            return isVisible() && !isInAmbientMode();
+        }
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -41,10 +87,13 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
             Drawable backgroundDrawable = resources.getDrawable(R.drawable.preview, null);
             mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
 
+            mDateFormat = new SimpleDateFormat("kk:mm:ss");
+
             mPaint = new Paint();
             mPaint.setColor(Color.WHITE);
             mPaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
             mPaint.setAntiAlias(true);
+            mPaint.setTextSize(48);
         }
 
         @Override
@@ -55,18 +104,25 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
         @Override
         public void onTimeTick() {
+            Log.d(TAG, "onTimeTick");
             super.onTimeTick();
             /* the time changed */
+
+            invalidate();
         }
 
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
+            Log.d(TAG, "onAmbientModeChanged");
             super.onAmbientModeChanged(inAmbientMode);
             /* the wearable switched between modes */
+            invalidate();
+            updateTimer();
         }
 
         @Override
         public void onDraw(Canvas canvas, Rect bounds) {
+            Log.d(TAG, "onDraw");
             /* draw your watch face */
             int width = bounds.width();
             int height = bounds.height();
@@ -81,13 +137,15 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
             canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
 
             // Draw text
-            canvas.drawText("10:09", 10, 10, mPaint);
+            mCalendar = Calendar.getInstance();
+            canvas.drawText(mDateFormat.format(mCalendar.getTime()), 20, 80, mPaint);
         }
 
         @Override
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
             /* the watch face became visible or invisible */
+            updateTimer();
         }
     }
 }
