@@ -3,7 +3,10 @@ package com.github.hiroyuki_komatsu.pixelwatchface;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -26,6 +29,7 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
         /* graphic objects */
         Bitmap mBackgroundBitmap;
         Bitmap mBackgroundScaledBitmap;
+        Paint mPaint;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -36,6 +40,11 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
             Resources resources = PixelWatchfaceService.this.getResources();
             Drawable backgroundDrawable = resources.getDrawable(R.drawable.preview, null);
             mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
+
+            mPaint = new Paint();
+            mPaint.setColor(Color.WHITE);
+            mPaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
+            mPaint.setAntiAlias(true);
         }
 
         @Override
@@ -70,6 +79,9 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
                         width, height, true /* filter */);
             }
             canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
+
+            // Draw text
+            canvas.drawText("10:09", 10, 10, mPaint);
         }
 
         @Override
