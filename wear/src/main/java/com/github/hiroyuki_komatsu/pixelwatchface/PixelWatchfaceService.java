@@ -39,13 +39,15 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
         // Time to be displayed
         Calendar mCalendar;
         SimpleDateFormat mDateFormat;
+        SimpleDateFormat mDateFormatBlink;
 
         // Background bitmap
-        Bitmap mBackgroundBitmap;
-        Bitmap mBackgroundScaledBitmap;
+        Bitmap mMascotBitmap;
+        Bitmap mMascotScaledBitmap;
 
         // Paint for drawing text
-        Paint mPaint;
+        Paint mPaintBackground;
+        Paint mPaintText;
 
         // Handler to update the time once a second in interactive mode
         final Handler mUpdateTimeHandler = new Handler() {
@@ -84,16 +86,20 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
 
             /* load the background image */
             Resources resources = PixelWatchfaceService.this.getResources();
-            Drawable backgroundDrawable = resources.getDrawable(R.drawable.preview, null);
-            mBackgroundBitmap = ((BitmapDrawable) backgroundDrawable).getBitmap();
+            Drawable mascotDrawable = resources.getDrawable(R.drawable.droid, null);
+            mMascotBitmap = ((BitmapDrawable) mascotDrawable).getBitmap();
 
-            mDateFormat = new SimpleDateFormat("kk:mm:ss");
+            mDateFormat = new SimpleDateFormat("kk:mm");
+            mDateFormatBlink = new SimpleDateFormat("kk mm");
 
-            mPaint = new Paint();
-            mPaint.setColor(Color.WHITE);
-            mPaint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
-            mPaint.setAntiAlias(true);
-            mPaint.setTextSize(48);
+            mPaintText = new Paint();
+            mPaintText.setColor(Color.WHITE);
+            mPaintText.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));
+            mPaintText.setAntiAlias(true);
+            mPaintText.setTextSize(48);
+
+            mPaintBackground = new Paint();
+            mPaintBackground.setColor(Color.rgb(0, 0, 0));  // 0091EA - Light Blue A700
         }
 
         @Override
@@ -127,18 +133,21 @@ public class PixelWatchfaceService extends CanvasWatchFaceService {
             int width = bounds.width();
             int height = bounds.height();
 
-            // Draw the background, scaled to fit.
-            if (mBackgroundScaledBitmap == null
-                || mBackgroundScaledBitmap.getWidth() != width
-                || mBackgroundScaledBitmap.getHeight() != height) {
-                mBackgroundScaledBitmap = Bitmap.createScaledBitmap(mBackgroundBitmap,
-                        width, height, true /* filter */);
+            // Draw background
+            canvas.drawRect(0, 0, width, height, mPaintBackground);
+
+            // Draw the mascot, scaled to fit.
+            int mascotSize = width / 4;
+            if (mMascotScaledBitmap == null || mMascotScaledBitmap.getWidth() != mascotSize) {
+                // mMascotBitmap should be square.
+                mMascotScaledBitmap = Bitmap.createScaledBitmap(
+                        mMascotBitmap, mascotSize, mascotSize, false /* filter */);
             }
-            canvas.drawBitmap(mBackgroundScaledBitmap, 0, 0, null);
+            canvas.drawBitmap(mMascotScaledBitmap, width * 3/4, height - mascotSize, null);
 
             // Draw text
             mCalendar = Calendar.getInstance();
-            canvas.drawText(mDateFormat.format(mCalendar.getTime()), 20, 80, mPaint);
+            canvas.drawText(mDateFormat.format(mCalendar.getTime()), 30, 110, mPaintText);
         }
 
         @Override
